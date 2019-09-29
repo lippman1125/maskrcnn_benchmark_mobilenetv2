@@ -75,7 +75,7 @@ def build_resnet_fpn_p3p7_backbone(cfg):
 def build_mobilenet_v2_backbone(cfg):
     body = mobilenet_v2.MobileNetV2(cfg)
     in_channels_stage2 = cfg.MODEL.MOBILENET.OUT_CHANNELS
-    out_channels = cfg.MODEL.BACKBONE.OUT_CHANNELS
+    out_channels = cfg.MODEL.MOBILENET.BACKBONE_OUT_CHANNELS
     fpn = fpn_module.FPN(
         in_channels_list=in_channels_stage2,
         out_channels=out_channels,

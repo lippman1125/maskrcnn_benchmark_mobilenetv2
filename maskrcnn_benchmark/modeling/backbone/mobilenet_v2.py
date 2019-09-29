@@ -40,7 +40,7 @@ class InvertedResidual(nn.Module):
                 # dw
                 nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
                 # nn.BatchNorm2d(hidden_dim),
-                norm_func(oup),
+                norm_func(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # pw-linear
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
@@ -52,12 +52,12 @@ class InvertedResidual(nn.Module):
                 # pw
                 nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
                 # nn.BatchNorm2d(hidden_dim),
-                norm_func(oup),
+                norm_func(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # dw
                 nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
                 # nn.BatchNorm2d(hidden_dim),
-                norm_func(oup),
+                norm_func(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # pw-linear
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
@@ -92,10 +92,10 @@ featuremap_indexes = [
     GraphPath(4, 'conv', 3), # stride = 4     chn = 144
     GraphPath(7, 'conv', 3), # stride = 8     chn = 192
     GraphPath(10, 'conv', 3), # stride = 16   chn = 384
-    GraphPath(15, 'conv', 3), # stride = 32   chn = 960
+    GraphPath(16, 'conv', 3), # stride = 32   chn = 960
 ]
 class MobileNetV2(nn.Module):
-    def __init__(self, cfg, n_class=1000, input_size=224, width_mult=1., smooth=False, norm_func=nn.BatchNorm2d):
+    def __init__(self, cfg, n_class=1000, input_size=224, width_mult=1., smooth=False):
         super(MobileNetV2, self).__init__()
         block = InvertedResidual
         input_channel = 32
@@ -110,6 +110,7 @@ class MobileNetV2(nn.Module):
             [6, 160, 3, 2], # stride = 32
             [6, 320, 1, 1],
         ]
+        norm_func = nn.BatchNorm2d if cfg.MODEL.MOBILENET.FROZEN_BN == False else FrozenBatchNorm2d
 
         # building first layer
         assert input_size % 32 == 0
@@ -148,6 +149,7 @@ class MobileNetV2(nn.Module):
             return
         for layer_index in range(freeze_at):
             for p in self.features[layer_index].parameters():
+                print(p.size())
                 p.requires_grad = False
 
     # def forward(self, x, target):
@@ -161,20 +163,23 @@ class MobileNetV2(nn.Module):
         outputs = []
         fm_idx = 0
         for index, layer in enumerate(self.features):
-            x = layer(x)
-            if index == featuremap_indexes[fm_idx].s0:
+            # print(index, fm_idx)
+            if fm_idx < len(featuremap_indexes) and index == featuremap_indexes[fm_idx].s0:
                 sub = getattr(layer, featuremap_indexes[fm_idx].name)
-                for layer in sub[:featuremap_indexes.s1]:
+                for layer in sub[:featuremap_indexes[fm_idx].s1]:
                     x = layer(x)
                 y = x
-                for layer in sub[featuremap_indexes.s1:]:
+                for layer in sub[featuremap_indexes[fm_idx].s1:]:
                     x = layer(x)
-                fm_idx += 1
-                print(y.size())
+                           
+                fm_idx+=1
+                # print(y.size())
                 outputs.append(y)
-        print(x.size())
-        # add last layer
-        outputs.append(x)
+            else:
+                x =layer(x)
+        # print(x.size())
+        # # add last layer
+        # outputs.append(x)
         return outputs
 
     def _initialize_weights(self):

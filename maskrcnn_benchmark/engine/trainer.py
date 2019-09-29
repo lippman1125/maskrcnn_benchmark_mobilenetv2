@@ -63,7 +63,7 @@ def do_train(
         iteration = iteration + 1
         arguments["iteration"] = iteration
 
-        scheduler.step()
+        # scheduler.step()
 
         images = images.to(device)
         targets = [target.to(device) for target in targets]
@@ -114,6 +114,7 @@ def do_train(
         if iteration == max_iter:
             checkpointer.save("model_final", **arguments)
 
+        scheduler.step()
     total_training_time = time.time() - start_training_time
     total_time_str = str(datetime.timedelta(seconds=total_training_time))
     logger.info(
