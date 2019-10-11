@@ -95,7 +95,19 @@ class Checkpointer(object):
         return torch.load(f, map_location=torch.device("cpu"))
 
     def _load_model(self, checkpoint):
-        load_state_dict(self.model, checkpoint.pop("model"))
+        model_dict = self.model.state_dict()
+        '''
+        for k in model_dict.keys():
+            print(k)
+        print(checkpoint.keys())
+        for k in checkpoint['model']['net'].keys():
+            print(k)
+        '''
+        checkpoint = checkpoint.pop("model")
+        if 'net' in checkpoint:
+            load_state_dict(self.model, checkpoint.pop("net"))
+        else:
+            load_state_dict(self.model, checkpoint)
 
 
 class DetectronCheckpointer(Checkpointer):
