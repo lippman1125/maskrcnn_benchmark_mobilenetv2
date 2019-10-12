@@ -47,12 +47,19 @@ _C.INPUT.MAX_SIZE_TRAIN = 1333
 _C.INPUT.MIN_SIZE_TEST = 800
 # Maximum size of the side of the image during testing
 _C.INPUT.MAX_SIZE_TEST = 1333
+
 # Values to be used for image normalization
-_C.INPUT.PIXEL_MEAN = [102.9801, 115.9465, 122.7717]
+# _C.INPUT.PIXEL_MEAN = [102.9801, 115.9465, 122.7717]
 # Values to be used for image normalization
-_C.INPUT.PIXEL_STD = [1., 1., 1.]
+# _C.INPUT.PIXEL_STD = [1., 1., 1.]
 # Convert image to BGR format (for Caffe2 models), in range 0-255
-_C.INPUT.TO_BGR255 = True
+# _C.INPUT.TO_BGR255 = True
+# Values to be used for image normalization
+_C.INPUT.PIXEL_MEAN = [0.485, 0.456, 0.406]
+# Values to be used for image normalization to
+_C.INPUT.PIXEL_STD = [0.229, 0.224, 0.225]
+# Convert image to BGR format (for Caffe2 models), in range 0-255
+_C.INPUT.TO_BGR255 = False
 
 # Image ColorJitter
 _C.INPUT.BRIGHTNESS = 0.0
@@ -271,9 +278,9 @@ _C.MODEL.RESNETS.WIDTH_PER_GROUP = 64
 _C.MODEL.RESNETS.STRIDE_IN_1X1 = True
 
 # Residual transformation function
-_C.MODEL.RESNETS.TRANS_FUNC = "BottleneckWithFixedBatchNorm"
+_C.MODEL.RESNETS.TRANS_FUNC = "BottleneckWithBatchNorm"
 # ResNet's stem function (conv1 and pool1)
-_C.MODEL.RESNETS.STEM_FUNC = "StemWithFixedBatchNorm"
+_C.MODEL.RESNETS.STEM_FUNC = "StemWithBatchNorm"
 
 # Apply dilation in stage "res5"
 _C.MODEL.RESNETS.RES5_DILATION = 1

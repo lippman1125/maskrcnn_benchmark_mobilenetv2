@@ -390,11 +390,41 @@ class BottleneckWithFixedBatchNorm(Bottleneck):
             dcn_config=dcn_config
         )
 
+class BottleneckWithBatchNorm(Bottleneck):
+    def __init__(
+        self,
+        in_channels,
+        bottleneck_channels,
+        out_channels,
+        num_groups=1,
+        stride_in_1x1=True,
+        stride=1,
+        dilation=1,
+        dcn_config={}
+    ):
+        super(BottleneckWithBatchNorm, self).__init__(
+            in_channels=in_channels,
+            bottleneck_channels=bottleneck_channels,
+            out_channels=out_channels,
+            num_groups=num_groups,
+            stride_in_1x1=stride_in_1x1,
+            stride=stride,
+            dilation=dilation,
+            norm_func=nn.BatchNorm2d,
+            dcn_config=dcn_config
+        )
+
 
 class StemWithFixedBatchNorm(BaseStem):
     def __init__(self, cfg):
         super(StemWithFixedBatchNorm, self).__init__(
             cfg, norm_func=FrozenBatchNorm2d
+        )
+
+class StemWithBatchNorm(BaseStem):
+    def __init__(self, cfg):
+        super(StemWithBatchNorm, self).__init__(
+            cfg, norm_func=nn.BatchNorm2d
         )
 
 
@@ -430,11 +460,13 @@ class StemWithGN(BaseStem):
 
 _TRANSFORMATION_MODULES = Registry({
     "BottleneckWithFixedBatchNorm": BottleneckWithFixedBatchNorm,
+    "BottleneckWithBatchNorm": BottleneckWithBatchNorm,
     "BottleneckWithGN": BottleneckWithGN,
 })
 
 _STEM_MODULES = Registry({
     "StemWithFixedBatchNorm": StemWithFixedBatchNorm,
+    "StemWithBatchNorm": StemWithBatchNorm,
     "StemWithGN": StemWithGN,
 })
 
