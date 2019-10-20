@@ -133,3 +133,19 @@ class PascalVOCDataset(torch.utils.data.Dataset):
 
     def map_class_id_to_class_name(self, class_id):
         return PascalVOCDataset.CLASSES[class_id]
+
+
+class WiderVOCDataset(PascalVOCDataset):
+    CLASSES = (
+        "__background__ ",
+        "face",
+    )
+    def __init__(self, data_dir, split, use_difficult=False, transforms=None):
+        super(WiderVOCDataset).__init__(data_dir, split, use_difficult, transforms)
+
+        cls = WiderVOCDataset.CLASSES
+        self.class_to_ind = dict(zip(cls, range(len(cls))))
+        self.categories = dict(zip(range(len(cls)), cls))
+
+    def map_class_id_to_class_name(self, class_id):
+        return WiderVOCDataset.CLASSES[class_id]
