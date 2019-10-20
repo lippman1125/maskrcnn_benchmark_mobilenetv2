@@ -89,10 +89,10 @@ class CrossEntropyLabelSmooth(nn.Module):
 
 
 featuremap_indexes = [
-    GraphPath(4, 'conv', 3), # stride = 4     chn = 144
-    GraphPath(7, 'conv', 3), # stride = 8     chn = 192
-    GraphPath(10, 'conv', 3), # stride = 16   chn = 384
-    GraphPath(16, 'conv', 3), # stride = 32   chn = 960
+    GraphPath(3, 'conv', 3), # stride = 4     chn = 144
+    GraphPath(6, 'conv', 3), # stride = 8     chn = 192
+    GraphPath(13, 'conv', 3), # stride = 16   chn = 576
+    GraphPath(17, 'conv', 3), # stride = 32   chn = 1280
 ]
 class MobileNetV2(nn.Module):
     def __init__(self, cfg, n_class=1000, input_size=224, width_mult=1., smooth=False):
