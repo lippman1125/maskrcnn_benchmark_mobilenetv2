@@ -141,7 +141,7 @@ class WiderVOCDataset(PascalVOCDataset):
         "face",
     )
     def __init__(self, data_dir, split, use_difficult=False, transforms=None):
-        super(WiderVOCDataset).__init__(data_dir, split, use_difficult, transforms)
+        super(WiderVOCDataset, self).__init__(data_dir, split, use_difficult, transforms)
 
         cls = WiderVOCDataset.CLASSES
         self.class_to_ind = dict(zip(cls, range(len(cls))))
