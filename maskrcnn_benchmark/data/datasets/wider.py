@@ -4,6 +4,7 @@ import torch
 import torch.utils.data
 from PIL import Image
 import sys
+import scipy.io as sio
 
 if sys.version_info[0] == 2:
     import xml.etree.cElementTree as ET
@@ -14,54 +15,31 @@ else:
 from maskrcnn_benchmark.structures.bounding_box import BoxList
 
 
-class PascalVOCDataset(torch.utils.data.Dataset):
+class WiderFaceDataset(torch.utils.data.Dataset):
 
     CLASSES = (
         "__background__ ",
-        "aeroplane",
-        "bicycle",
-        "bird",
-        "boat",
-        "bottle",
-        "bus",
-        "car",
-        "cat",
-        "chair",
-        "cow",
-        "diningtable",
-        "dog",
-        "horse",
-        "motorbike",
-        "person",
-        "pottedplant",
-        "sheep",
-        "sofa",
-        "train",
-        "tvmonitor",
+        "face",
     )
 
-    def __init__(self, data_dir, split, use_difficult=False, transforms=None):
+    def __init__(self, data_dir, transforms=None):
         self.root = data_dir
-        self.image_set = split
-        self.keep_difficult = use_difficult
         self.transforms = transforms
+        self._annopath = os.path.join(self.root, 'annotations', '%s')
+        self._imgpath = os.path.join(self.root, 'WIDER_train/images', '%s')
+        self._imgsetpath = os.path.join(self.root, "img_list.txt")
+        self.ids = list()
+        # it's a list of tuples: [(*.jpg, *.xml), ()...]
+        with open(self._imgsetpath, 'r') as f:
+          self.ids = [tuple(line.strip("\n").split()) for line in f]
 
-        self._annopath = os.path.join(self.root, "Annotations", "%s.xml")
-        self._imgpath = os.path.join(self.root, "JPEGImages", "%s.jpg")
-        self._imgsetpath = os.path.join(self.root, "ImageSets", "Main", "%s.txt")
-
-        with open(self._imgsetpath % self.image_set) as f:
-            self.ids = f.readlines()
-        self.ids = [x.strip("\n") for x in self.ids]
-        self.id_to_img_map = {k: v for k, v in enumerate(self.ids)}
-
-        cls = PascalVOCDataset.CLASSES
+        cls = WiderFaceDataset.CLASSES
         self.class_to_ind = dict(zip(cls, range(len(cls))))
         self.categories = dict(zip(range(len(cls)), cls))
 
     def __getitem__(self, index):
         img_id = self.ids[index]
-        img = Image.open(self._imgpath % img_id).convert("RGB")
+        img = Image.open(self._imgpath % img_id[0]).convert("RGB")
 
         target = self.get_groundtruth(index)
         target = target.clip_to_image(remove_empty=True)
@@ -76,7 +54,7 @@ class PascalVOCDataset(torch.utils.data.Dataset):
 
     def get_groundtruth(self, index):
         img_id = self.ids[index]
-        anno = ET.parse(self._annopath % img_id).getroot()
+        anno = ET.parse(self._annopath % img_id[1]).getroot()
         anno = self._preprocess_annotation(anno)
 
         height, width = anno["im_info"]
@@ -132,4 +110,53 @@ class PascalVOCDataset(torch.utils.data.Dataset):
         return {"height": im_info[0], "width": im_info[1]}
 
     def map_class_id_to_class_name(self, class_id):
-        return PascalVOCDataset.CLASSES[class_id]
+        return WiderFaceDataset.CLASSES[class_id]
+
+
+class WiderFaceTestDataset(torch.utils.data.Dataset):
+
+    CLASSES = (
+        "__background__ ",
+        "face",
+    )
+
+    def __init__(self, data_dir, transforms=None):
+        self.root = data_dir
+        self.transforms = transforms
+        self._annopath = os.path.join(self.root, 'wider_face_split/wider_face_val.mat')
+        self._imgpath = os.path.join(self.root, 'WIDER_test/images', '%s')
+        wider_face = sio.loadmat(self._annopath)
+        event_list = wider_face['event_list']
+        file_list = wider_face['file_list']
+        self.ids = list()
+        for index, event in enumerate(event_list):
+            filelist = file_list[index][0]
+            for num, file in enumerate(filelist):
+                self.ids.append((event[0][0], file[0][0]))
+
+        cls = WiderFaceDataset.CLASSES
+        self.class_to_ind = dict(zip(cls, range(len(cls))))
+        self.categories = dict(zip(range(len(cls)), cls))
+
+    def __getitem__(self, index):
+        img_id = self.ids[index]
+        sub_path = os.path.join(img_id[0], img_id[1]) + ".jpg"
+        img = Image.open(self._imgpath % sub_path).convert("RGB")
+        target = None
+        if self.transforms is not None:
+            img, target = self.transforms(img, target)
+
+        return img, target, index
+
+    def __len__(self):
+        return len(self.ids)
+
+    def get_img_info(self, index):
+        img_id = self.ids[index]
+        sub_path = os.path.join(img_id[0], img_id[1]) + ".jpg"
+        img = Image.open(self._imgpath % sub_path).convert("RGB")
+        width, height = img.size
+        return {"event": img_id[0], "name": img_id[1], "height": height, "width": width}
+
+    def map_class_id_to_class_name(self, class_id):
+        return WiderFaceTestDataset.CLASSES[class_id]

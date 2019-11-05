@@ -92,13 +92,11 @@ class DatasetCatalog(object):
             "split": "test"
             # PASCAL VOC2012 doesn't made the test annotations available, so there's no json annotation
         },
-        "wider_trainval": {
-            "data_dir": "voc/wider_face",
-            "split": "trainval"
+        "wider_train": {
+            "data_dir": "wider_face",
         },
         "wider_test": {
-            "data_dir": "voc/wider_face",
-            "split": "test"
+            "data_dir": "wider_face",
         },
         "cityscapes_fine_instanceonly_seg_train_cocostyle": {
             "img_dir": "cityscapes/images",
@@ -138,15 +136,24 @@ class DatasetCatalog(object):
                 factory="PascalVOCDataset",
                 args=args,
             )
-        elif "wider" in name:
+        elif "wider_train" in name:
             data_dir = DatasetCatalog.DATA_DIR
             attrs = DatasetCatalog.DATASETS[name]
             args = dict(
                 data_dir=os.path.join(data_dir, attrs["data_dir"]),
-                split=attrs["split"],
             )
             return dict(
-                factory="WiderVOCDataset",
+                factory="WiderFaceDataset",
+                args=args,
+            )
+        elif "wider_test" in name:
+            data_dir = DatasetCatalog.DATA_DIR
+            attrs = DatasetCatalog.DATASETS[name]
+            args = dict(
+                data_dir=os.path.join(data_dir, attrs["data_dir"]),
+            )
+            return dict(
+                factory="WiderFaceTestDataset",
                 args=args,
             )
         raise RuntimeError("Dataset not available: {}".format(name))
