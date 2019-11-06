@@ -5,6 +5,8 @@ import torch.utils.data
 from PIL import Image
 import sys
 import scipy.io as sio
+import cv2
+import numpy as np
 
 if sys.version_info[0] == 2:
     import xml.etree.cElementTree as ET
@@ -104,7 +106,7 @@ class WiderFaceDataset(torch.utils.data.Dataset):
 
     def get_img_info(self, index):
         img_id = self.ids[index]
-        anno = ET.parse(self._annopath % img_id).getroot()
+        anno = ET.parse(self._annopath % img_id[1]).getroot()
         size = anno.find("size")
         im_info = tuple(map(int, (size.find("height").text, size.find("width").text)))
         return {"height": im_info[0], "width": im_info[1]}
@@ -124,11 +126,14 @@ class WiderFaceTestDataset(torch.utils.data.Dataset):
         self.root = data_dir
         self.transforms = transforms
         self._annopath = os.path.join(self.root, 'wider_face_split/wider_face_val.mat')
-        self._imgpath = os.path.join(self.root, 'WIDER_test/images', '%s')
+        self._imgpath = os.path.join(self.root, 'WIDER_val/images', '%s')
+        self._imginfo = os.path.join(self.root, 'WIDER_val_info.txt')
         wider_face = sio.loadmat(self._annopath)
         event_list = wider_face['event_list']
         file_list = wider_face['file_list']
         self.ids = list()
+        with open(self._imginfo, "r") as f:
+            self.imginfo = f.readlines()
         for index, event in enumerate(event_list):
             filelist = file_list[index][0]
             for num, file in enumerate(filelist):
@@ -142,7 +147,8 @@ class WiderFaceTestDataset(torch.utils.data.Dataset):
         img_id = self.ids[index]
         sub_path = os.path.join(img_id[0], img_id[1]) + ".jpg"
         img = Image.open(self._imgpath % sub_path).convert("RGB")
-        target = None
+        # fake target
+        target = BoxList([[10,10,30,30]],(600,600))
         if self.transforms is not None:
             img, target = self.transforms(img, target)
 
@@ -152,10 +158,9 @@ class WiderFaceTestDataset(torch.utils.data.Dataset):
         return len(self.ids)
 
     def get_img_info(self, index):
+        # print("Test get_img_info:{}".format(index))
         img_id = self.ids[index]
-        sub_path = os.path.join(img_id[0], img_id[1]) + ".jpg"
-        img = Image.open(self._imgpath % sub_path).convert("RGB")
-        width, height = img.size
+        height, width = self.imginfo[index].strip("\n").split()
         return {"event": img_id[0], "name": img_id[1], "height": height, "width": width}
 
     def map_class_id_to_class_name(self, class_id):

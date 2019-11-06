@@ -19,19 +19,24 @@ def do_wider_evaluation(dataset, predictions, output_folder, logger):
         image_width = img_info["width"]
         image_height = img_info["height"]
         prediction = prediction.resize((image_width, image_height))
-        det = prediction.bbox.asnumpy()
+        det = prediction.bbox.numpy()
+        scores = prediction.get_field("scores").numpy()
+        # sort by score
+        order = scores.argsort()[::-1]
+        det_sort = det[order]
+        scores_sort = scores[order]
 
         if not os.path.exists(os.path.join(output_folder, image_event)):
             os.makedirs(os.path.join(output_folder, image_event))
         f = open(os.path.join(output_folder, image_event) + '/' + image_name + '.txt', 'w')
         f.write('{:s}\n'.format(image_event + '/' + image_name + '.jpg'))
-        f.write('{:d}\n'.format(det.shape[0]))
-        for i in range(det.shape[0]):
-            xmin = det[i][0]
-            ymin = det[i][1]
-            xmax = det[i][2]
-            ymax = det[i][3]
-            score = det[i][4]
+        f.write('{:d}\n'.format(det_sort.shape[0]))
+        for i in range(det_sort.shape[0]):
+            xmin = det_sort[i][0]
+            ymin = det_sort[i][1]
+            xmax = det_sort[i][2]
+            ymax = det_sort[i][3]
+            score = scores_sort[i]
             f.write('{:.1f} {:.1f} {:.1f} {:.1f} {:.3f}\n'.
                     format(xmin, ymin, (xmax - xmin + 1), (ymax - ymin + 1), score))
         f.close()
