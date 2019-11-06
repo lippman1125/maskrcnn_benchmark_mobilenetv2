@@ -25,7 +25,7 @@ MODEL:
     FEATURE_EXTRACTOR: "FPN2MLPFeatureExtractor"
     PREDICTOR: "FPNPredictor"
 DATASETS:
-  TRAIN: ("wider_trainval",)
+  TRAIN: ("wider_train",)
   TEST: ("wider_test",)
 DATALOADER:
   SIZE_DIVISIBILITY: 32
