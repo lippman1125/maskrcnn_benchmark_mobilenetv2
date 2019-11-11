@@ -62,7 +62,7 @@ class WiderFaceDataset(torch.utils.data.Dataset):
         height, width = anno["im_info"]
         target = BoxList(anno["boxes"], (width, height), mode="xyxy")
         target.add_field("labels", anno["labels"])
-        target.add_field("difficult", anno["difficult"])
+        # target.add_field("difficult", anno["difficult"])
         return target
 
     def _preprocess_annotation(self, target):
@@ -72,9 +72,9 @@ class WiderFaceDataset(torch.utils.data.Dataset):
         TO_REMOVE = 1
 
         for obj in target.iter("object"):
-            difficult = int(obj.find("difficult").text) == 1
-            if not self.keep_difficult and difficult:
-                continue
+            # difficult = int(obj.find("difficult").text) == 1
+            # if not self.keep_difficult and difficult:
+            #    continue
             name = obj.find("name").text.lower().strip()
             bb = obj.find("bndbox")
             # Make pixel indexes 0-based
@@ -91,7 +91,7 @@ class WiderFaceDataset(torch.utils.data.Dataset):
 
             boxes.append(bndbox)
             gt_classes.append(self.class_to_ind[name])
-            difficult_boxes.append(difficult)
+            # difficult_boxes.append(difficult)
 
         size = target.find("size")
         im_info = tuple(map(int, (size.find("height").text, size.find("width").text)))
@@ -99,7 +99,7 @@ class WiderFaceDataset(torch.utils.data.Dataset):
         res = {
             "boxes": torch.tensor(boxes, dtype=torch.float32),
             "labels": torch.tensor(gt_classes),
-            "difficult": torch.tensor(difficult_boxes),
+            # "difficult": torch.tensor(difficult_boxes),
             "im_info": im_info,
         }
         return res
